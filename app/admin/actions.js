@@ -186,3 +186,81 @@ export async function tambahProduk(prevStateOrFormData, maybeFormData) {
     redirect("/admin");
   }
 }
+
+export async function ubahProduk(prevStateOrFormData, maybeFormData) {
+  const formData =
+    maybeFormData instanceof FormData
+      ? maybeFormData
+      : prevStateOrFormData instanceof FormData
+      ? prevStateOrFormData
+      : null;
+
+  if (!formData) {
+    return { error: "Data form tidak valid." };
+  }
+
+  const id = formData.get("id");
+  const nama = formData.get("nama");
+  const hargaRaw = formData.get("harga");
+  const kategori = formData.get("kategori");
+  const foto_url = formData.get("foto_url");
+  const deskripsi = formData.get("deskripsi");
+
+  if (!id) {
+    return { error: "ID produk tidak valid." };
+  }
+
+  if (!nama || !String(nama).trim()) {
+    return { error: "Nama produk wajib diisi." };
+  }
+
+  const harga = parseInt(hargaRaw, 10);
+  if (isNaN(harga) || harga < 0) {
+    return { error: "Harga produk harus berupa angka tidak negatif." };
+  }
+
+  let isSuccess = false;
+  let pesanError = null;
+
+  try {
+    const supabase = await createSessionClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return { error: "Sesi telah berakhir atau Anda belum login." };
+    }
+
+    const { error } = await supabase
+      .from("produk")
+      .update({
+        nama: String(nama).trim(),
+        harga,
+        kategori: String(kategori || "").trim() || null,
+        foto_url: String(foto_url || "").trim() || null,
+        deskripsi: String(deskripsi || "").trim() || null,
+      })
+      .eq("id", id);
+
+    if (error) {
+      pesanError = error.message || "Gagal mengubah produk di database.";
+    } else {
+      isSuccess = true;
+    }
+  } catch (err) {
+    pesanError = err.message || "Terjadi kesalahan pada server.";
+  }
+
+  if (pesanError) {
+    return { error: pesanError };
+  }
+
+  if (isSuccess) {
+    revalidatePath("/");
+    revalidatePath("/admin");
+    revalidatePath(`/produk/${id}`);
+    redirect("/admin");
+  }
+}

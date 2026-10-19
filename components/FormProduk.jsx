@@ -1,3 +1,6 @@
+"use client";
+
+import { useActionState } from "react";
 import Input from "@/components/Input";
 import Tombol from "@/components/Tombol";
 
@@ -7,16 +10,24 @@ export default function FormProduk({
   produk = {},
   labelTombol,
   action,
-  state,
-  isPending,
 }) {
+  const [state, formAction, isPending] = useActionState(
+    action || (() => {}),
+    null
+  );
+
   return (
-    <form action={action} className="flex max-w-xl flex-col gap-4">
+    <form action={formAction} className="flex max-w-xl flex-col gap-4">
+      {produk.id && (
+        <input type="hidden" name="id" defaultValue={produk.id} />
+      )}
+
       {state?.error && (
         <div className="rounded-lg border border-garis bg-permukaan p-3 text-sm text-bahaya">
           {state.error}
         </div>
       )}
+
       <Input label="Nama produk" name="nama" defaultValue={produk.nama} required />
       <Input
         label="Harga (Rp)"
@@ -34,9 +45,10 @@ export default function FormProduk({
         defaultValue={produk.foto_url}
       />
       <Input label="Deskripsi" name="deskripsi" textarea defaultValue={produk.deskripsi} />
+
       <div className="flex gap-3">
         <Tombol type="submit" disabled={isPending}>
-          {labelTombol}
+          {isPending ? "Menyimpan..." : labelTombol}
         </Tombol>
         <Tombol href="/admin" varian="garis">
           Batal
