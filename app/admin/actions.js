@@ -65,3 +65,54 @@ export async function logout() {
   redirect("/admin/login");
 }
 
+export async function gantiPassword(prevStateOrFormData, maybeFormData) {
+  const formData =
+    maybeFormData instanceof FormData
+      ? maybeFormData
+      : prevStateOrFormData instanceof FormData
+      ? prevStateOrFormData
+      : null;
+
+  if (!formData) {
+    return { error: "Data form tidak valid." };
+  }
+
+  const passwordBaru = formData.get("password_baru");
+  const konfirmasiPassword = formData.get("konfirmasi_password");
+
+  if (!passwordBaru || !konfirmasiPassword) {
+    return { error: "Semua kolom password wajib diisi." };
+  }
+
+  if (passwordBaru.length < 8) {
+    return { error: "Password baru minimal 8 karakter." };
+  }
+
+  if (passwordBaru !== konfirmasiPassword) {
+    return { error: "Konfirmasi password harus sama dengan password baru." };
+  }
+
+  try {
+    const supabase = await createSessionClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return { error: "Sesi telah berakhir. Silakan login kembali." };
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: passwordBaru,
+    });
+
+    if (error) {
+      return { error: error.message || "Gagal mengganti password." };
+    }
+
+    return { sukses: "Password berhasil diganti." };
+  } catch (err) {
+    return { error: err.message || "Terjadi kesalahan pada server." };
+  }
+}
