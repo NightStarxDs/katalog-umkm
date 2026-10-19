@@ -1,6 +1,6 @@
-import KartuProduk from "@/components/KartuProduk";
 import { toko } from "@/lib/toko";
 import { createServerClient } from "@/lib/supabase";
+import KatalogKlien from "@/components/KatalogKlien";
 
 export const dynamic = "force-dynamic";
 
@@ -46,11 +46,7 @@ export default async function HalamanKatalog() {
         ) : daftarProduk.length === 0 ? (
           <p className="text-teks-lembut">Belum ada produk</p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-            {daftarProduk.map((produk) => (
-              <KartuProduk key={produk.id} produk={produk} />
-            ))}
-          </div>
+          <KatalogKlien daftarProduk={daftarProduk} />
         )}
       </section>
     </>
